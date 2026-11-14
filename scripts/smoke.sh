@@ -14,8 +14,9 @@ docker run --rm --platform "$platform" --user larakube larakube-rootfs:smoke /bi
     kubectl version --client | head -1
     k3s --version | head -1
     gh --version | head -1
+    tea --version | head -1
     # Cloud tooling lives on the Windows host, never in the distro.
-    for host_only in tofu tea aws gcloud k9s; do
+    for host_only in tofu aws gcloud k9s; do
         if command -v "$host_only" >/dev/null; then echo "$host_only must not be in the image" >&2; exit 1; fi
     done
     podman --version

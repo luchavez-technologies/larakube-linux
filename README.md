@@ -8,10 +8,10 @@ The Linux system that LaraKube Desktop imports on Windows as its own WSL distro,
 
 - Ubuntu 24.04, systemd on (`wsl.conf`)
 - The LaraKube CLI, kubectl and k3s
-- The GitHub CLI (`gh`)
+- The git forge CLIs: GitHub CLI (`gh`) and Tea CLI (`tea`), since projects (and their git work) live in the distro
 - Rootless Podman, git and ssh
 
-Only what the CLI's local commands (`cluster:*`, `up`/`down` on the local environment, `new`, `build`, `exec`, `trust`) need runs in here. Cloud tooling (OpenTofu, AWS and Google Cloud CLIs, k9s, Tea) is installed on the Windows host, where the CLI runs every non-local command. `~/.kube` inside the distro is a link to `%USERPROFILE%\.kube`, so the host and the distro share one kubeconfig: the local k3s context (`https://127.0.0.1:6443`) answers from both sides through WSL2's localhost forwarding.
+Only what the CLI's local commands (`cluster:*`, `up`/`down` on the local environment, `new`, `build`, `exec`, `trust`) need runs in here. Cloud tooling (OpenTofu, AWS and Google Cloud CLIs, k9s) is installed on the Windows host, where the CLI runs every non-local command; when one of those needs `gh` or `tea`, it runs the distro's copy through `wsl.exe`. `~/.kube` inside the distro is a link to `%USERPROFILE%\.kube`, so the host and the distro share one kubeconfig: the local k3s context (`https://127.0.0.1:6443`) answers from both sides through WSL2's localhost forwarding.
 - A `larakube` login (UID 1000, no password), with a `projects` folder in its home
 - `/etc/larakube-rootfs.json` listing the versions that went in
 

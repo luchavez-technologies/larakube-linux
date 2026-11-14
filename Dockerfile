@@ -1,7 +1,8 @@
 # The larakube-ubuntu WSL distro, as a root filesystem. `scripts/build.sh` exports it to a tarball that Windows imports with
 # `wsl --import larakube-ubuntu <folder> larakube-ubuntu-<arch>.tar.gz`. It holds only what the CLI's LOCAL commands
-# (cluster, up/down, new, build, exec, trust) need inside WSL: the CLI, k3s, kubectl, git, ssh, the GitHub CLI and
-# rootless Podman. Cloud tooling (OpenTofu, AWS/Google Cloud CLIs, k9s, Tea) runs on the Windows host instead, and
+# (cluster, up/down, new, build, exec, trust) and project git work need inside WSL: the CLI, k3s, kubectl, git, ssh,
+# the git forge CLIs (gh, tea) and rootless Podman. Projects live here, so gh/tea live here too; the Windows-side CLI
+# reaches them through wsl.exe. Cloud tooling (OpenTofu, AWS/Google Cloud CLIs, k9s) runs on the Windows host, and
 # ~/.kube is linked to the host's, so both sides share one kubeconfig.
 FROM ubuntu:24.04
 
@@ -28,14 +29,18 @@ RUN set -eux; \
     chmod +x /usr/local/bin/kubectl; \
     curl -fsSL https://get.k3s.io | INSTALL_K3S_SKIP_START=true INSTALL_K3S_SKIP_ENABLE=true sh -s - --disable=traefik --write-kubeconfig-mode=644
 
-# The GitHub CLI (`gh`), the current release when the image is built.
+# Git forge CLIs: GitHub CLI (`gh`) and Tea CLI (`tea`), each the current release when the image is built.
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \
     tag="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/cli/cli/releases/latest | sed 's#.*/tag/##')"; \
     version="${tag#v}"; \
     curl -fsSL "https://github.com/cli/cli/releases/download/${tag}/gh_${version}_linux_${arch}.tar.gz" | tar -xz -C /tmp; \
     install -m 0755 "/tmp/gh_${version}_linux_${arch}/bin/gh" /usr/local/bin/gh; \
-    rm -rf "/tmp/gh_${version}_linux_${arch}"
+    rm -rf "/tmp/gh_${version}_linux_${arch}"; \
+    tea_ver="$(curl -fsSL https://gitea.com/api/v1/repos/gitea/tea/releases/latest | jq -r .tag_name | sed 's/^v//')"; \
+    [ -n "$tea_ver" ] && [ "$tea_ver" != "null" ] || tea_ver="0.16.0"; \
+    curl -fsSL -o /usr/local/bin/tea "https://dl.gitea.com/tea/${tea_ver}/tea-${tea_ver}-linux-${arch}"; \
+    chmod 0755 /usr/local/bin/tea
 
 RUN set -eux; \
     case "$(dpkg --print-architecture)" in amd64) asset=x64 ;; arm64) asset=arm ;; *) echo "unsupported architecture" >&2; exit 1 ;; esac; \
@@ -58,11 +63,13 @@ COPY wsl.conf /etc/wsl.conf
 
 # What went in, for the setup screen and for bug reports.
 RUN set -eux; \
-    printf '{"larakube":"%s","kubectl":"%s","k3s":"%s","gh":"%s","podman":"%s","base":"%s"}\n' \
+    printf '{"larakube":"%s","kubectl":"%s","k3s":"%s","gh":"%s","tea":"%s","podman":"%s","git":"%s","base":"%s"}\n' \
         "$(/usr/local/bin/larakube --version 2>/dev/null | tail -1 | tr -d '"')" \
         "$(kubectl version --client -o json | jq -r .clientVersion.gitVersion)" \
         "$(k3s --version 2>/dev/null | awk 'NR==1 {print $3}')" \
         "$(gh --version | awk 'NR==1 {print $3}')" \
+        "$(tea --version 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk 'NR==1 {print $2}')" \
         "$(podman --version | awk '{print $3}')" \
+        "$(git --version | awk '{print $3}')" \
         "$(. /etc/os-release && echo "$VERSION_ID")" \
         > /etc/larakube-rootfs.json
