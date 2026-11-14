@@ -7,10 +7,11 @@ The Linux system that LaraKube Desktop imports on Windows as its own WSL distro,
 ## What is in it
 
 - Ubuntu 24.04, systemd on (`wsl.conf`)
-- The LaraKube CLI, kubectl, k3s and OpenTofu
-- The GitHub CLI (`gh`), Tea CLI (`tea`), and k9s (to inspect clusters)
-- Cloud provider CLIs: AWS CLI (`aws`) and Google Cloud SDK (`gcloud` + `gke-gcloud-auth-plugin`)
+- The LaraKube CLI, kubectl and k3s
+- The GitHub CLI (`gh`)
 - Rootless Podman, git and ssh
+
+Only what the CLI's local commands (`cluster:*`, `up`/`down` on the local environment, `new`, `build`, `exec`, `trust`) need runs in here. Cloud tooling (OpenTofu, AWS and Google Cloud CLIs, k9s, Tea) is installed on the Windows host, where the CLI runs every non-local command. `~/.kube` inside the distro is a link to `%USERPROFILE%\.kube`, so the host and the distro share one kubeconfig: the local k3s context (`https://127.0.0.1:6443`) answers from both sides through WSL2's localhost forwarding.
 - A `larakube` login (UID 1000, no password), with a `projects` folder in its home
 - `/etc/larakube-rootfs.json` listing the versions that went in
 
