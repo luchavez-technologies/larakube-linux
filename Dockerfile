@@ -1,9 +1,9 @@
 # The larakube-ubuntu WSL distro, as a root filesystem. `scripts/build.sh` exports it to a tarball that Windows imports with
-# `wsl --import larakube-ubuntu <folder> larakube-ubuntu-<arch>.tar.gz`. It holds only what the CLI's LOCAL commands
-# (cluster, up/down, new, build, exec, trust) and project git work need inside WSL: the CLI, k3s, kubectl, git, ssh,
-# the git forge CLIs (gh, tea) and rootless Podman. Projects live here, so gh/tea live here too; the Windows-side CLI
-# reaches them through wsl.exe. Cloud tooling (OpenTofu, AWS/Google Cloud CLIs, k9s) runs on the Windows host, and
-# ~/.kube is linked to the host's, so both sides share one kubeconfig.
+# `wsl --import larakube-ubuntu <folder> larakube-ubuntu-<arch>.tar.gz`. Projects live here, and every project command
+# runs here (for every environment), so it holds what they need: the CLI, k3s, kubectl, git, ssh, the git forge CLIs
+# (gh, tea), rootless Podman, and the AWS/Google Cloud CLIs that EKS/GKE kubeconfigs and ECR/GAR registry logins call.
+# Their logins, ~/.kube, ~/.aws, ~/.config/gcloud and ~/.larakube/config.json are linked to the Windows host's, so one
+# sign-in works on both sides. Only provisioning (OpenTofu) and k9s stay on the Windows host.
 FROM ubuntu:24.04
 
 # canary, or a release tag such as v0.34.0 (what larakube-cli publishes its binaries under)
@@ -28,6 +28,25 @@ RUN set -eux; \
     curl -fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/${version}/bin/linux/${arch}/kubectl"; \
     chmod +x /usr/local/bin/kubectl; \
     curl -fsSL https://get.k3s.io | INSTALL_K3S_SKIP_START=true INSTALL_K3S_SKIP_ENABLE=true sh -s - --disable=traefik --write-kubeconfig-mode=644
+
+# Google Cloud SDK (gcloud CLI) and the GKE auth plugin GKE kubeconfigs call.
+RUN set -eux; \
+    mkdir -p /etc/apt/keyrings; \
+    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/keyrings/cloud.google.gpg; \
+    echo "deb [signed-by=/etc/apt/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" > /etc/apt/sources.list.d/google-cloud-sdk.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        google-cloud-cli \
+        google-cloud-cli-gke-gcloud-auth-plugin; \
+    rm -rf /var/lib/apt/lists/*
+
+# AWS CLI v2, which EKS kubeconfigs (`aws eks get-token`) and ECR logins call.
+RUN set -eux; \
+    case "$(dpkg --print-architecture)" in amd64) aws_arch=x86_64 ;; arm64) aws_arch=aarch64 ;; *) echo "unsupported architecture" >&2; exit 1 ;; esac; \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}.zip" -o /tmp/awscliv2.zip; \
+    unzip -q /tmp/awscliv2.zip -d /tmp; \
+    /tmp/aws/install; \
+    rm -rf /tmp/aws /tmp/awscliv2.zip
 
 # Git forge CLIs: GitHub CLI (`gh`) and Tea CLI (`tea`), each the current release when the image is built.
 RUN set -eux; \
@@ -63,12 +82,14 @@ COPY wsl.conf /etc/wsl.conf
 
 # What went in, for the setup screen and for bug reports.
 RUN set -eux; \
-    printf '{"larakube":"%s","kubectl":"%s","k3s":"%s","gh":"%s","tea":"%s","podman":"%s","git":"%s","base":"%s"}\n' \
+    printf '{"larakube":"%s","kubectl":"%s","k3s":"%s","gh":"%s","tea":"%s","aws":"%s","gcloud":"%s","podman":"%s","git":"%s","base":"%s"}\n' \
         "$(/usr/local/bin/larakube --version 2>/dev/null | tail -1 | tr -d '"')" \
         "$(kubectl version --client -o json | jq -r .clientVersion.gitVersion)" \
         "$(k3s --version 2>/dev/null | awk 'NR==1 {print $3}')" \
         "$(gh --version | awk 'NR==1 {print $3}')" \
         "$(tea --version 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk 'NR==1 {print $2}')" \
+        "$(aws --version 2>&1 | awk '{print $1}' | cut -d/ -f2)" \
+        "$(gcloud --version 2>/dev/null | awk 'NR==1 {print $4}')" \
         "$(podman --version | awk '{print $3}')" \
         "$(git --version | awk '{print $3}')" \
         "$(. /etc/os-release && echo "$VERSION_ID")" \

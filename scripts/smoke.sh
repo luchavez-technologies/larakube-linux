@@ -15,8 +15,11 @@ docker run --rm --platform "$platform" --user larakube larakube-rootfs:smoke /bi
     k3s --version | head -1
     gh --version | head -1
     tea --version | head -1
+    aws --version
+    gcloud --version | head -1
+    gke-gcloud-auth-plugin --version | head -1
     # Cloud tooling lives on the Windows host, never in the distro.
-    for host_only in tofu aws gcloud k9s; do
+    for host_only in tofu k9s; do
         if command -v "$host_only" >/dev/null; then echo "$host_only must not be in the image" >&2; exit 1; fi
     done
     podman --version
@@ -26,6 +29,7 @@ docker run --rm --platform "$platform" --user larakube larakube-rootfs:smoke /bi
     test "$(id -u)" = 1000
     grep -q "systemd=true" /etc/wsl.conf
     grep -q "default=larakube" /etc/wsl.conf
+    grep -q "metadata" /etc/wsl.conf
     test -d /home/larakube/projects
     sudo -n true
     # A user session (rootless Podman, k3s) needs these; without them user@1000.service fails on every start.

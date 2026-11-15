@@ -10,10 +10,20 @@ The Linux system that LaraKube Desktop imports on Windows as its own WSL distro,
 - The LaraKube CLI, kubectl and k3s
 - The git forge CLIs: GitHub CLI (`gh`) and Tea CLI (`tea`), since projects (and their git work) live in the distro
 - Rootless Podman, git and ssh
-
-Only what the CLI's local commands (`cluster:*`, `up`/`down` on the local environment, `new`, `build`, `exec`, `trust`) need runs in here. Cloud tooling (OpenTofu, AWS and Google Cloud CLIs, k9s) is installed on the Windows host, where the CLI runs every non-local command; when one of those needs `gh` or `tea`, it runs the distro's copy through `wsl.exe`. `~/.kube` inside the distro is a link to `%USERPROFILE%\.kube`, so the host and the distro share one kubeconfig: the local k3s context (`https://127.0.0.1:6443`) answers from both sides through WSL2's localhost forwarding.
+- The AWS and Google Cloud CLIs (with `gke-gcloud-auth-plugin`), which EKS/GKE kubeconfigs and ECR/GAR registry logins call
 - A `larakube` login (UID 1000, no password), with a `projects` folder in its home
 - `/etc/larakube-rootfs.json` listing the versions that went in
+
+## Windows and the distro
+
+Projects live in here, so every project command runs in here, for every environment: `up`, `cloud:deploy production`, `dotenv:push`, and anything run from inside a project folder. Only commands that don't touch a project stay on the Windows host: provisioning with OpenTofu (`cloud:create`, `tls:*`), servers, Cluster Tools, and `setup`. Windows with no distro is for servers and Cluster Tools only.
+
+Both sides share one copy of everything that must agree. These are links to the Windows host's, made on the first dispatched command:
+- `~/.kube` (one kubeconfig: the local k3s context at `https://127.0.0.1:6443` answers from both sides through WSL2's localhost forwarding);
+- `~/.larakube/config.json` (servers, accounts, tokens);
+- `~/.aws` and `~/.config/gcloud` (one cloud login).
+
+Server SSH keys are read straight from `C:\Users\<you>\.ssh` through `/mnt/c`. The `metadata` mount option lets them be made 0600, which OpenSSH requires.
 
 ## Releases
 
