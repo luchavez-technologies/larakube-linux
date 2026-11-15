@@ -32,6 +32,11 @@ docker run --rm --platform "$platform" --user larakube larakube-rootfs:smoke /bi
     grep -q "metadata" /etc/wsl.conf
     test -d /home/larakube/projects
     sudo -n true
+    # k3s setup, trust and the k3s ctr sudoers rule go through non-interactive
+    # sudo. The image installs classic sudo explicitly (26.04 defaults to
+    # sudo-rs elsewhere); this proves the passwordless rule works either way.
+    sudo -n k3s --version | head -1
+    sudo --version | head -1
     # A user session (rootless Podman, k3s) needs these; without them user@1000.service fails on every start.
     test -e /usr/lib/x86_64-linux-gnu/security/pam_systemd.so -o -e /usr/lib/aarch64-linux-gnu/security/pam_systemd.so
     dpkg -s dbus-user-session >/dev/null

@@ -1,12 +1,12 @@
 # larakube-ubuntu
 
-The Linux system that LaraKube Desktop imports on Windows as its own WSL distro, `larakube-ubuntu`. It is the official Ubuntu 24.04 image with what Desktop needs already installed, packed as a root filesystem tarball for `wsl --import`.
+The Linux system that LaraKube Desktop imports on Windows as its own WSL distro, `larakube-ubuntu`. It is the official Ubuntu 26.04 LTS image with what Desktop needs already installed, packed as a root filesystem tarball for `wsl --import`.
 
 **You do not install this yourself.** LaraKube Desktop downloads it on first run, checks its checksum, and imports it. It never touches a distro you already have, and `wsl --unregister larakube-ubuntu` removes it.
 
 ## What is in it
 
-- Ubuntu 24.04, systemd on (`wsl.conf`)
+- Ubuntu 26.04 LTS, systemd on (`wsl.conf`)
 - The LaraKube CLI, kubectl and k3s
 - The git forge CLIs: GitHub CLI (`gh`) and Tea CLI (`tea`), since projects (and their git work) live in the distro
 - Rootless Podman, git and ssh

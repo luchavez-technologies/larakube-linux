@@ -4,7 +4,7 @@
 # (gh, tea), rootless Podman, and the AWS/Google Cloud CLIs that EKS/GKE kubeconfigs and ECR/GAR registry logins call.
 # Their logins, ~/.kube, ~/.aws, ~/.config/gcloud and ~/.larakube/config.json are linked to the Windows host's, so one
 # sign-in works on both sides. Only provisioning (OpenTofu) and k9s stay on the Windows host.
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # canary, or a release tag such as v0.34.0 (what larakube-cli publishes its binaries under)
 ARG LARAKUBE_RELEASE=canary
