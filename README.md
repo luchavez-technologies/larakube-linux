@@ -1,6 +1,6 @@
 # larakube-ubuntu
 
-The Linux system that LaraKube Desktop imports on Windows as its own WSL distro, `larakube-ubuntu`. It is the official Ubuntu 26.04 LTS image with what Desktop needs already installed, packed as a root filesystem tarball for `wsl --import`.
+**LaraKube Linux**, the Linux system LaraKube Desktop runs on Windows. Users only ever see it called LaraKube Linux; `larakube-ubuntu` is its technical name, as the WSL distro (`wsl -l`), this repository, and the release image. It is based on the official Ubuntu 26.04 LTS image with what Desktop needs already installed, packed as a root filesystem tarball for `wsl --import`.
 
 **You do not install this yourself.** LaraKube Desktop downloads it on first run, checks its checksum, and imports it. It never touches a distro you already have, and `wsl --unregister larakube-ubuntu` removes it.
 
@@ -14,9 +14,9 @@ The Linux system that LaraKube Desktop imports on Windows as its own WSL distro,
 - A `larakube` login (UID 1000, no password), with a `projects` folder in its home
 - `/etc/larakube-rootfs.json` listing the versions that went in
 
-## Windows and the distro
+## Windows and LaraKube Linux
 
-Projects live in here, so every project command runs in here, for every environment: `up`, `cloud:deploy production`, `dotenv:push`, and anything run from inside a project folder. Only commands that don't touch a project stay on the Windows host: provisioning with OpenTofu (`cloud:create`, `tls:*`), servers, Cluster Tools, and `setup`. Windows with no distro is for servers and Cluster Tools only.
+Projects live in here, so every project command runs in here, for every environment: `up`, `cloud:deploy production`, `dotenv:push`, and anything run from inside a project folder. Only commands that don't touch a project stay on the Windows host: provisioning with OpenTofu (`cloud:create`, `tls:*`), servers, Cluster Tools, and `setup`. Windows without LaraKube Linux is for servers and Cluster Tools only.
 
 Both sides share one copy of everything that must agree. These are links to the Windows host's, made on the first dispatched command:
 - `~/.kube` (one kubeconfig: the local k3s context at `https://127.0.0.1:6443` answers from both sides through WSL2's localhost forwarding);
