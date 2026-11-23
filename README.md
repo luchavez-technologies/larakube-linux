@@ -53,3 +53,7 @@ wsl -d larakube-ubuntu -- larakube --version
 ## Why a distro of our own
 
 A student's existing Ubuntu could be any version, with systemd off and none of our tools. A dedicated distro is the same for everyone, leaves their own distro alone, and is one command to remove. LaraKube Desktop does the same thing Docker Desktop does with its `docker-desktop` distro.
+
+## License
+
+The files in this repository are source-available under [`FSL-1.1-MIT`](LICENSE). The published image also contains Ubuntu and other third-party software, which keep their own licenses.
